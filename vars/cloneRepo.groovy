@@ -1,0 +1,6 @@
+def call() {
+
+        checkout scm
+    }
+
+    
