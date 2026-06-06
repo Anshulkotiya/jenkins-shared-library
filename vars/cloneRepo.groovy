@@ -1,6 +1,7 @@
-def call() {
+def call(String repoUrl, String branch='main') {
 
-        checkout scm
-    }
-
-    
+    git(
+        url: repoUrl,
+        branch: branch
+    )
+}
