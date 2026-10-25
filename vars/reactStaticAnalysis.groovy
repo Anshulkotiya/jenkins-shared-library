@@ -19,7 +19,7 @@ def call(Map config = [:]) {
 
         eslintScan(
             scanPath: scanPath,
-            eslintConfig: config.eslintConfig ?: 'eslint.config.mjs'
+           
         )
 
         stage('SonarQube Static Analysis') {
