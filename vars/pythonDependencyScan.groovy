@@ -79,11 +79,13 @@ def call(Map config = [:]) {
             '''
         }
 
+      
         archiveArtifacts(
-            artifacts: 'trivy-dependency-report.json',
+            artifacts: 'trivy-dependency-report.txt',
             fingerprint: true
         )
 
-        echo 'Trivy dependency report archived successfully.'
+        echo 'Trivy table report archived successfully.'
+
     }
 }
