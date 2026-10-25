@@ -2,33 +2,23 @@
 def call(Map config = [:]) {
 
     def scanPath = config.scanPath ?: '.'
-    def eslintVersion = config.eslintVersion ?: '9.0.0'
+    def eslintConfig = config.eslintConfig ?: 'eslint.config.mjs'
     def scanStatus = 0
 
-    stage('Install ESLint') {
-        sh """
-            set -eu
-
-            command -v npm >/dev/null 2>&1 || {
-                echo "ERROR: Node.js/npm is not installed."
-                exit 1
-            }
-
-            mkdir -p .tools/eslint
-
-            npm install \
-                --prefix .tools/eslint \
-                --no-save \
-                --no-package-lock \
-                eslint@${eslintVersion}
-        """
-    }
-
     stage('ESLint Static Analysis') {
+
         scanStatus = sh(
             script: """
+                set -eu
+
+                if [ ! -x .tools/eslint/node_modules/.bin/eslint ]; then
+                    echo "ERROR: ESLint is not installed in the workspace."
+                    exit 1
+                fi
+
                 .tools/eslint/node_modules/.bin/eslint \
                     '${scanPath}' \
+                    --config '${eslintConfig}' \
                     --format html \
                     --output-file eslint-report.html
             """,
@@ -37,11 +27,12 @@ def call(Map config = [:]) {
 
         archiveArtifacts(
             artifacts: 'eslint-report.html',
+            allowEmptyArchive: true,
             fingerprint: true
         )
 
         if (scanStatus != 0) {
-            error("ESLint scan failed. Check eslint-report.html in build artifacts.")
+            error('ESLint scan failed. Check the build log and report.')
         }
     }
 }
