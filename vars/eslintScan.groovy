@@ -24,11 +24,11 @@ stage('ESLint Setup') {
                     echo "ERROR: ESLint is not installed in the workspace."
                     exit 1
                 fi
-
-             .tools/eslint/node_modules/.bin/eslint \
+.tools/eslint/node_modules/.bin/eslint \
     '${scanPath}' \
     --no-config-lookup \
     --no-ignore \
+    --language-options '{"parserOptions":{"ecmaVersion":"latest","sourceType":"module","ecmaFeatures":{"jsx":true}}}' \
     --rule 'no-unused-vars: warn' \
     --format html \
     --output-file eslint-report.html
