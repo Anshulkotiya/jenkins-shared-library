@@ -17,12 +17,10 @@ def call(Map config = [:]) {
             git branch: branch, url: repoUrl
         }
 
-        stage('ESLint Scan') {
-            eslintScan(
-                scanPath: scanPath,
-                eslintVersion: config.eslintVersion ?: '9.0.0'
-            )
-        }
+        eslintScan(
+            scanPath: scanPath,
+            eslintConfig: config.eslintConfig ?: 'eslint.config.mjs'
+        )
 
         stage('SonarQube Static Analysis') {
             def scannerHome = tool scannerTool
@@ -38,14 +36,6 @@ def call(Map config = [:]) {
                         -Dsonar.sourceEncoding=UTF-8
                 """
             }
-        }
-
-        stage('Archive Reports') {
-            archiveArtifacts(
-                artifacts: 'eslint-report.html',
-                allowEmptyArchive: true,
-                fingerprint: true
-            )
         }
 
     } finally {
