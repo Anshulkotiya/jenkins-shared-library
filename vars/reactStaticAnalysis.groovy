@@ -1,24 +1,62 @@
+
 def call(Map config = [:]) {
-    def srcDir = config.get('srcDir', 'src')
 
-    echo "🔍 [Shared Library] Running ESLint Static Code Analysis on '${srcDir}'..."
+    def repoUrl = config.repoUrl ?: 'https://github.com/OT-MICROSERVICES/frontend.git'
+    def branch = config.branch ?: 'main'
+    def scanPath = config.scanPath ?: '.'
+    def sonarProjectKey = config.sonarProjectKey ?: 'react-static-analysis'
+    def sonarServer = config.sonarServer ?: 'SonarQube'
+    def scannerTool = config.scannerTool ?: 'sonar-scanner'
+    def slackChannel = config.slackChannel ?: '#p19-slack-notification'
+    def emailRecipients = config.emailRecipients ?: 'anshul.kotiya.snaatak@mygurukulam.co'
+    def buildUser = config.buildUser ?: 'Anshul Kotiya'
 
-    sh '''
-        # Node/npx check karega, agar nahi hai toh portable Node 18 use karega
-        if ! command -v npx &> /dev/null; then
-            mkdir -p /tmp/node18
-            if [ ! -f "/tmp/node18/bin/npx" ]; then
-                echo "📥 Downloading Node.js 18..."
-                curl -sL https://nodejs.org/dist/v18.20.1/node-v18.20.1-linux-x64.tar.xz | tar -xJ -C /tmp/node18 --strip-components=1
-            fi
-            export PATH=/tmp/node18/bin:$PATH
-        fi
+    try {
 
-        echo "Running with Node: $(node -v) and npx: $(npx -v)"
-        
-        # ESLint Scan
-        npx eslint src/ --quiet || true
-    '''
+        stage('Checkout Code') {
+            git branch: branch, url: repoUrl
+        }
 
-    echo "✅ [Shared Library] ESLint Static Code Analysis Completed!"
+        stage('ESLint Scan') {
+            eslintScan(
+                scanPath: scanPath,
+                eslintVersion: config.eslintVersion ?: '9.0.0'
+            )
+        }
+
+        stage('SonarQube Static Analysis') {
+            def scannerHome = tool scannerTool
+
+            withSonarQubeEnv(sonarServer) {
+                sh """
+                    set -eu
+
+                    "${scannerHome}/bin/sonar-scanner" \
+                        -Dsonar.projectKey="${sonarProjectKey}" \
+                        -Dsonar.sources=. \
+                        -Dsonar.exclusions="node_modules/**,.tools/**,build/**,dist/**" \
+                        -Dsonar.sourceEncoding=UTF-8
+                """
+            }
+        }
+
+        stage('Archive Reports') {
+            archiveArtifacts(
+                artifacts: 'eslint-report.html',
+                allowEmptyArchive: true,
+                fingerprint: true
+            )
+        }
+
+    } finally {
+        try {
+            sendNotification(
+                slackChannel: slackChannel,
+                emailRecipients: emailRecipients,
+                buildUser: buildUser
+            )
+        } catch (Exception e) {
+            echo "Notification failed: ${e.message}"
+        }
+    }
 }
