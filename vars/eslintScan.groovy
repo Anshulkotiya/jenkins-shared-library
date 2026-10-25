@@ -42,6 +42,9 @@ stage('ESLint Setup') {
             fingerprint: true
         )
 
+        echo "ESLint exit status: ${scanStatus}"
+sh 'cat eslint-report.html || true'
+
         if (scanStatus != 0) {
             error('ESLint scan failed. Check the build log and report.')
         }
