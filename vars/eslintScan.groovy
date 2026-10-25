@@ -5,6 +5,15 @@ def call(Map config = [:]) {
     def eslintConfig = config.eslintConfig ?: 'eslint.config.mjs'
     def scanStatus = 0
 
+    
+stage('ESLint Setup') {
+    sh '''
+        set -eu
+        npm install --prefix .tools/eslint --no-save --no-package-lock eslint@9.0.0
+    '''
+}
+
+
     stage('ESLint Static Analysis') {
 
         scanStatus = sh(
