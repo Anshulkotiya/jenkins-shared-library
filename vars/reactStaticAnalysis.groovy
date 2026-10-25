@@ -17,9 +17,11 @@ def call(Map config = [:]) {
             git branch: branch, url: repoUrl
         }
 
+         def eslintConfig = config.eslintConfig ?: 'eslint.config.mjs'
+
         eslintScan(
             scanPath: scanPath,
-           
+           eslintConfig: eslintConfig
         )
 
         stage('SonarQube Static Analysis') {
