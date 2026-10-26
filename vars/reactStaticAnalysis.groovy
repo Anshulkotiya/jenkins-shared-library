@@ -44,16 +44,17 @@ def call(Map config = [:]) {
         }
 
         stage('Static Code Analysis') {
+             withEnv(["SCAN_PATH=${scanPath}"]) {
             sh '''
                 set +e
 
-                npx eslint '${scanPath}' --ext .js,.jsx \
+                npx eslint "$SCAN_PATH" --ext .js,.jsx \
                     --format json \
                     --output-file eslint-report.json
 
                 ESLINT_STATUS=\\$?
 
-                npx eslint '${scanPath}' --ext .js,.jsx \
+                npx eslint "$SCAN_PATH" --ext .js,.jsx \
                     --format stylish \
                     > eslint-report.txt 2>&1
 
@@ -68,6 +69,6 @@ def call(Map config = [:]) {
                 fingerprint: false
             )
         }
+        }
     }
 }
-
