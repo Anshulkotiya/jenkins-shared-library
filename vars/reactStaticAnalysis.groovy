@@ -44,7 +44,7 @@ def call(Map config = [:]) {
         }
 
         stage('Static Code Analysis') {
-            sh """
+            sh '''
                 set +e
 
                 npx eslint '${scanPath}' --ext .js,.jsx \
@@ -60,7 +60,7 @@ def call(Map config = [:]) {
                 echo "ESLint exit code: \\$ESLINT_STATUS"
                 cat eslint-report.txt
                 exit 0
-            """
+            '''
 
             archiveArtifacts(
                 artifacts: 'eslint-report.json,eslint-report.txt',
