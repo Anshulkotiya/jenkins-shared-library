@@ -32,10 +32,9 @@ def call(Map config = [:]) {
                                 ;;
                         esac
 
-                        VERSION="$(curl -fsSL \
-                            https://api.github.com/repos/aquasecurity/trivy/releases/latest |
-                            sed -n 's/.*"tag_name": "v\\([^"]*\\)".*/\\1/p' |
-                            head -n 1)"
+                       VERSION="$(curl -fsSL \
+    https://api.github.com/repos/aquasecurity/trivy/releases/latest |
+    python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"].removeprefix("v"))')"
 
                         test -n "$VERSION"
 
