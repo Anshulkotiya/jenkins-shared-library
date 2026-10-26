@@ -1,4 +1,4 @@
-```groovy
+
 def call(Map config = [:]) {
 
     def scanPath = config.get('scanPath', 'src')
@@ -70,4 +70,4 @@ def call(Map config = [:]) {
         }
     }
 }
-```
+
