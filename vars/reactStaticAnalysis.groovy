@@ -7,7 +7,11 @@ def call(Map config = [:]) {
     nodejs(nodeTool) {
 
         stage('Check ESLint') {
-            sh 'node --version && npm --version && npx eslint --version'
+            sh '''
+                node --version
+                npm --version
+                ./node_modules/.bin/eslint --version
+            '''
         }
 
         stage('Configure ESLint') {
@@ -44,31 +48,49 @@ def call(Map config = [:]) {
         }
 
         stage('Static Code Analysis') {
-             withEnv(["SCAN_PATH=${scanPath}"]) {
-            sh '''
-           
+            int scanStatus = 0
 
-                npx eslint "$SCAN_PATH" --ext .js,.jsx \
-                    --format json \
-                    --output-file eslint-report.json
+            withEnv(["SCAN_PATH=${scanPath}"]) {
+                try {
+                    sh '''
+                        set +e
 
-                ESLINT_STATUS=\\$?
+                        ./node_modules/.bin/eslint "$SCAN_PATH" \
+                            --ext .js,.jsx \
+                            --format json \
+                            --output-file eslint-report.json
+                        JSON_STATUS=$?
 
-                npx eslint "$SCAN_PATH" --ext .js,.jsx \
-                    --format stylish \
-                    > eslint-report.txt 2>&1
+                        ./node_modules/.bin/eslint "$SCAN_PATH" \
+                            --ext .js,.jsx \
+                            --format stylish \
+                            > eslint-report.txt 2>&1
+                        TEXT_STATUS=$?
 
-                echo "ESLint exit code: \\$ESLINT_STATUS"
-                cat eslint-report.txt
-                
-            '''
+                        echo "JSON report exit code: $JSON_STATUS"
+                        echo "Text report exit code: $TEXT_STATUS"
+                        cat eslint-report.txt
 
-            archiveArtifacts(
-                artifacts: 'eslint-report.json,eslint-report.txt',
-                allowEmptyArchive: true,
-                fingerprint: false
-            )
-        }
+                        if [ "$JSON_STATUS" -ne 0 ] || \
+                           [ "$TEXT_STATUS" -ne 0 ]; then
+                            exit 1
+                        fi
+                    '''
+                } catch (Exception e) {
+                    scanStatus = 1
+                    echo "ESLint failed: ${e.getMessage()}"
+                } finally {
+                    archiveArtifacts(
+                        artifacts: 'eslint-report.json,eslint-report.txt',
+                        allowEmptyArchive: true,
+                        fingerprint: false
+                    )
+                }
+            }
+
+            if (scanStatus != 0) {
+                error('Static Code Analysis failed. Check the ESLint reports.')
+            }
         }
     }
 }
