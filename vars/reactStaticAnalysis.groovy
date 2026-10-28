@@ -80,7 +80,7 @@ def call(Map config = [:]) {
 
                     echo "JSON report exit code: $JSON_STATUS"
                     echo "Text report exit code: $TEXT_STATUS"
-                    cat eslint-report.txt
+                    cat reports/eslint-report.txt
 
                     echo "ESLint scan completed."
                     exit 0
