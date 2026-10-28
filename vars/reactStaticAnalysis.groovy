@@ -1,7 +1,7 @@
 
 def call(Map config = [:]) {
 
-    def scanPath = config.get('scanPath', 'src')
+    def scanPath = config.get('scanPath', '.')
     def nodeTool = config.get('nodeTool')
 
     nodejs(nodeTool) {
@@ -10,6 +10,11 @@ def call(Map config = [:]) {
             sh '''
                 node --version
                 npm --version
+              
+                 if [ ! -x ./node_modules/.bin/eslint ]; then
+                echo "ERROR: ESLint is not installed."
+                exit 1
+            fi
                 ./node_modules/.bin/eslint --version
             '''
         }
@@ -59,16 +64,18 @@ def call(Map config = [:]) {
                 sh '''
                     set +e
 
+                    mkdir -p reports
+
                     ./node_modules/.bin/eslint "$SCAN_PATH" \
                         --ext .js,.jsx \
                         --format json \
-                        --output-file eslint-report.json
+                        --output-file reports/eslint-report.json
                     JSON_STATUS=$?
 
                     ./node_modules/.bin/eslint "$SCAN_PATH" \
                         --ext .js,.jsx \
                         --format stylish \
-                        > eslint-report.txt 2>&1
+                        > reports/eslint-report.txt 2>&1
                     TEXT_STATUS=$?
 
                     echo "JSON report exit code: $JSON_STATUS"
