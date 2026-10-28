@@ -82,13 +82,13 @@ def call(Map config = [:]) {
                     echo "Text report exit code: $TEXT_STATUS"
                     cat eslint-report.txt
 
-                    echo "ESLint scan completed. Reports will be archived."
+                    echo "ESLint scan completed."
                     exit 0
                 '''
             }
 
             archiveArtifacts(
-                artifacts: 'eslint-report.json,eslint-report.txt',
+                artifacts: 'reports/eslint-report.json,reports/eslint-report.txt',
                 allowEmptyArchive: true,
                 fingerprint: false
             )
