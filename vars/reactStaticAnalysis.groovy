@@ -6,19 +6,36 @@ def call(Map config = [:]) {
 
     nodejs(nodeTool) {
 
-        stage('Check ESLint') {
+        stage('Check and install ESLint') {
             sh '''
-                node --version
-                npm --version
-              
-                 if [ ! -x ./node_modules/.bin/eslint ]; then
-                echo "ERROR: ESLint is not installed."
-                exit 1
+ set -e
+
+        if [ -x .ci-tools/node_modules/.bin/eslint ]; then
+            echo "ESLint is already installed."
+        else
+            echo "ESLint not found. Installing ESLint tools..."
+
+            mkdir -p .ci-tools
+            cd .ci-tools
+
+            if [ ! -f package.json ]; then
+                npm init -y
             fi
-                ./node_modules/.bin/eslint --version
-            '''
+
+            npm install --no-audit --no-fund \
+                eslint@8.57.0 \
+                eslint-plugin-react@7.34.1 \
+                eslint-plugin-react-hooks@4.6.0
+        fi
+
+        cd "$WORKSPACE"
+
+        .ci-tools/node_modules/.bin/eslint --version
+   
+    '''
         }
 
+        
         stage('Configure ESLint') {
             script {
                 if (!fileExists('.eslintrc.json')) {
@@ -62,28 +79,30 @@ def call(Map config = [:]) {
         stage('Static Code Analysis') {
             withEnv(["SCAN_PATH=${scanPath}"]) {
                 sh '''
-                    set +e
+                   set +e
 
-                    mkdir -p reports
+            mkdir -p reports
 
-                    ./node_modules/.bin/eslint "$SCAN_PATH" \
-                        --ext .js,.jsx \
-                        --format json \
-                        --output-file reports/eslint-report.json
-                    JSON_STATUS=$?
+            .ci-tools/node_modules/.bin/eslint "$SCAN_PATH" \
+                --ext .js,.jsx \
+                --resolve-plugins-relative-to .ci-tools \
+                --format json \
+                --output-file reports/eslint-report.json
+            JSON_STATUS=$?
 
-                    ./node_modules/.bin/eslint "$SCAN_PATH" \
-                        --ext .js,.jsx \
-                        --format stylish \
-                        > reports/eslint-report.txt 2>&1
-                    TEXT_STATUS=$?
+            .ci-tools/node_modules/.bin/eslint "$SCAN_PATH" \
+                --ext .js,.jsx \
+                --resolve-plugins-relative-to .ci-tools \
+                --format stylish \
+                > reports/eslint-report.txt 2>&1
+            TEXT_STATUS=$?
 
-                    echo "JSON report exit code: $JSON_STATUS"
-                    echo "Text report exit code: $TEXT_STATUS"
-                    cat reports/eslint-report.txt
+            echo "JSON report exit code: $JSON_STATUS"
+            echo "Text report exit code: $TEXT_STATUS"
+            cat reports/eslint-report.txt
 
-                    echo "ESLint scan completed."
-                    exit 0
+            echo "ESLint scan completed."
+            exit 0
                 '''
             }
 
