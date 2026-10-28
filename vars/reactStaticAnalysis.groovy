@@ -22,10 +22,10 @@ def call(Map config = [:]) {
                 npm init -y
             fi
 
-            npm install --no-audit --no-fund \
-                eslint@8.57.0 \
-                eslint-plugin-react@7.34.1 \
-                eslint-plugin-react-hooks@4.6.0
+           npm install --verbose --no-audit --no-fund \
+    eslint@8.57.0 \
+    eslint-plugin-react@7.34.1 \
+    eslint-plugin-react-hooks@4.6.0
         fi
 
         cd "$WORKSPACE"
